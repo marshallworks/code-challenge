@@ -6,7 +6,7 @@
 	var UT = window.UT || {};
 
 	// SCOPE:
-	var init, generateBoard, drawBoard, movePiece, advanceSim, resetSim;
+	var init, generateBoard, drawBoard, movePiece, advanceSim, runSim, resetSim;
 	// Base Board Settings
 	var boardDefaultWidth = 10;
 	var boardDefaultHeight = 10;
@@ -43,6 +43,7 @@
 			width: boardWidth,
 			height: boardHeight
 		};
+		this.status = 'New Simulation'
 		return this;
 	}
 
@@ -78,6 +79,8 @@
 		var occupiedColor = 'rgb(170, 0, 0)';
 		var visitedColor = 'rgb(120, 120, 120)';
 		var canvas = UT.qs('#board');
+		var statusDisplay = UT.qs('.status');
+		statusDisplay.innerHTML = sim.status;
 		canvas.width = (tilePxWidth + tilePadding) * sim.size.width;
 		canvas.height = (tilePxHeight + tilePadding) * sim.size.height;
 		if (canvas.getContext) {
@@ -130,16 +133,18 @@
 		if (sim.position.x < 0 ||
 			sim.position.x + 1 > sim.size.width ||
 			sim.position.y < 0 ||
-			sim.position.y + 1 > sim.size.height) {
-			console.log('Fell Off at: ' + sim.position.x + ' x ' + sim.position.y);
+			sim.position.y + 1 > sim.size.height)
+		{
+			sim.status = '<strong>Start was Doomed</strong>: Fell Off at: ' + sim.position.x + ' x ' + sim.position.y;
 			return false;
 		}
 		newTile = sim.board[sim.position.y][sim.position.x];
 		if (newTile.visited) {
-			console.log('Loop');
+			sim.status = '<strong>Start was Safe</strong>: detected Loop.';
 			return false;
 		} else {
 			// Simultion can continue
+			sim.status = 'Can continue.';
 			newTile.visited = true;
 			return true;
 		}
@@ -149,6 +154,15 @@
 		UT.qs('.advance').disabled = !movePiece(currentState);
 		drawBoard(currentState);
 	};
+
+	runSim = function () {
+		UT.qs('.advance').disabled = true;
+		var result = true;
+		while (result) {
+			result = movePiece(currentState);
+		}
+		drawBoard(currentState);
+	}
 
 	resetSim = function () {
 		UT.qs('.advance').disabled = false;
@@ -160,8 +174,10 @@
 	init = function () {
 		console.log('Page Load');
 		var advanceButton = UT.qs('.advance');
+		var runButton = UT.qs('.run');
 		var resetButton = UT.qs('.reset');
 		UT.on(advanceButton, 'click', advanceSim);
+		UT.on(runButton, 'click', runSim)
 		UT.on(resetButton, 'click', resetSim);
 		resetSim();
 		return true;
