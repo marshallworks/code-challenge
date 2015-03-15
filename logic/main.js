@@ -6,7 +6,7 @@
 	var UT = window.UT || {};
 
 	// SCOPE:
-	var init, generateBoard, drawBoard;
+	var init, generateBoard, drawBoard, movePiece, advanceSim, resetSim;
 	// Base Board Settings
 	var boardDefaultWidth = 10;
 	var boardDefaultHeight = 10;
@@ -46,6 +46,7 @@
 		return this;
 	}
 
+	// Functions
 	generateBoard = function (tileWidth, tileHeight) {
 		var _i, _j;
 		// Create board
@@ -75,10 +76,10 @@
 		var tilePadding = 6;
 		var defaultColor = 'rgb(0, 170, 0)';
 		var occupiedColor = 'rgb(170, 0, 0)';
-		var visiteColor = 'rgb(120, 120, 120)';
+		var visitedColor = 'rgb(120, 120, 120)';
 		var canvas = UT.qs('#board');
-		canvas.width = tilePxWidth * tilePadding * sim.size.width;
-		canvas.height = tilePxHeight * tilePadding * sim.size.height;
+		canvas.width = (tilePxWidth + tilePadding) * sim.size.width;
+		canvas.height = (tilePxHeight + tilePadding) * sim.size.height;
 		if (canvas.getContext) {
 			var ctx = canvas.getContext('2d');
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -91,7 +92,7 @@
 					if (_i === sim.position.y && _j === sim.position.x) {
 						ctx.fillStyle = occupiedColor;
 					} else if (sim.board[_i][_j].visited) {
-						ctx.fillStyle = visiteColor;
+						ctx.fillStyle = visitedColor;
 					}
 					ctx.fillRect(
 						_j * (tilePxWidth + tilePadding) + (tilePadding/2),
@@ -106,11 +107,63 @@
 		return sim;
 	};
 
+	movePiece = function (sim) {
+		var currentTile = sim.board[sim.position.y][sim.position.x];
+		var newTile = currentTile;
+		switch (currentTile.direction) {
+			case 'up':
+				sim.position.y--;
+				break;
+			case 'right':
+				sim.position.x++;
+				break;
+			case 'down':
+				sim.position.y++;
+				break;
+			case 'left':
+				sim.position.x--;
+				break;
+			default:
+				console.log('Invalid Direction.');
+				return false;
+		}
+		if (sim.position.x < 0 ||
+			sim.position.x + 1 > sim.size.width ||
+			sim.position.y < 0 ||
+			sim.position.y + 1 > sim.size.height) {
+			console.log('Fell Off at: ' + sim.position.x + ' x ' + sim.position.y);
+			return false;
+		}
+		newTile = sim.board[sim.position.y][sim.position.x];
+		if (newTile.visited) {
+			console.log('Loop');
+			return false;
+		} else {
+			// Simultion can continue
+			newTile.visited = true;
+			return true;
+		}
+	};
+
+	advanceSim = function () {
+		UT.qs('.advance').disabled = !movePiece(currentState);
+		drawBoard(currentState);
+	};
+
+	resetSim = function () {
+		UT.qs('.advance').disabled = false;
+		currentState = new SimState();
+		drawBoard(currentState);
+	};
+
 	// Initializer
 	init = function () {
 		console.log('Page Load');
-		currentState = new SimState();
-		drawBoard(currentState);
+		var advanceButton = UT.qs('.advance');
+		var resetButton = UT.qs('.reset');
+		UT.on(advanceButton, 'click', advanceSim);
+		UT.on(resetButton, 'click', resetSim);
+		resetSim();
 		return true;
 	};
 
