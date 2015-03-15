@@ -20,6 +20,18 @@
 		}
 		return false;
 	};
+	// Type Checking
+	UT.isNumber = function (n) {
+		return !isNaN(parseFloat(n)) && isFinite(n);
+	}
+	// Get Type
+	UT.getInt = function (n) {
+		if (UT.isNumber(n)) {
+			return parseInt(n, 10);
+		} else {
+			return false;
+		}
+	}
 
 	// EXPORT
 	window.UT = UT;

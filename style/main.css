@@ -57,6 +57,14 @@ body {
 	font-family: sans-serif;
 }
 
+strong {
+	font-weight: bold;
+}
+
+p {
+	margin: 8px 0;
+}
+
 label {
 	display: block;
 	margin: 6px 0;
@@ -93,8 +101,9 @@ button:disabled {
 
 .ui {
 	position: fixed;
-	top: 0;
+	bottom: 0;
 	right: 0;
 	width: 260px;
 	padding: 10px;
+	background-color: rgba(26, 30, 34, 0.8);
 }
