@@ -20,17 +20,17 @@
 		resetSim,
 		init;
 	// Base Board Settings
-	var boardDefaultWidth = 10;
-	var boardDefaultHeight = 10;
+	var boardDefaultWidth = 16;
+	var boardDefaultHeight = 16;
 	var tileDirections = ['up', 'right', 'down', 'left'];
 	var currentState = null;
-	var tilePxWidth = 10;
-	var tilePxHeight = 10;
-	var tilePxPadding = 20;
-	var defaultColor = 'rgb(0, 170, 0)';
-	var occupiedColor = 'rgb(170, 0, 0)';
-	var visitedColor = 'rgb(120, 120, 120)';
-	var pathColor = 'rgba(0, 0, 0, 0.5)';
+	var tilePxWidth = 8;
+	var tilePxHeight = 8;
+	var tilePxPadding = 26;
+	var defaultColor = 'rgb(66, 77, 88)';
+	var occupiedColor = 'rgb(158, 11, 15)';
+	var visitedColor = 'rgb(60, 184, 120)';
+	var pathColor = 'rgba(20, 220, 250, 0.95)';
 	var soundFreqDefault = 440;
 
 	// Canvas Context
@@ -279,7 +279,27 @@
 	};
 
 	resetSim = function () {
-		currentState = new SimState();
+		var makeWidth = null;
+		var makeHeight = null;
+		var makeStartX = null;
+		var makeStartY = null;
+		var setWidth = parseInt(UT.qs('#board-width').value.replace(' ', ''));
+		var setHeight = parseInt(UT.qs('#board-height').value.replace(' ', ''));
+		var setStartX = parseInt(UT.qs('#start-x').value.replace(' ', ''));
+		var setStartY = parseInt(UT.qs('#start-y').value.replace(' ', ''));
+		if (!isNaN(setWidth)) {
+			makeWidth = setWidth;
+		}
+		if (!isNaN(setHeight)) {
+			makeHeight = setHeight;
+		}
+		if (!isNaN(setStartX)) {
+			makeStartX = setStartX;
+		}
+		if (!isNaN(setStartY)) {
+			makeStartY = setStartY;
+		}
+		currentState = new SimState(makeWidth, makeHeight, makeStartX, makeStartY);
 		if (canvasCtx === null) {
 			initCanvas();
 		}
