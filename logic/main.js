@@ -8,7 +8,9 @@
 
 	// SCOPE:
 	var generateBoard,
+		initCanvas,
 		drawBoard,
+		drawPath,
 		initSound,
 		playSound,
 		movePiece,
@@ -22,7 +24,18 @@
 	var boardDefaultHeight = 10;
 	var tileDirections = ['up', 'right', 'down', 'left'];
 	var currentState = null;
+	var tilePxWidth = 10;
+	var tilePxHeight = 10;
+	var tilePxPadding = 20;
+	var defaultColor = 'rgb(0, 170, 0)';
+	var occupiedColor = 'rgb(170, 0, 0)';
+	var visitedColor = 'rgb(120, 120, 120)';
+	var pathColor = 'rgba(0, 0, 0, 0.5)';
 	var soundFreqDefault = 440;
+
+	// Canvas Context
+	var canvas = null;
+	var canvasCtx = null;
 
 	// Audio Context
 	var audioCtx = null;
@@ -63,8 +76,11 @@
 			width: boardWidth,
 			height: boardHeight
 		};
+		this.moves = [{
+			x: startX,
+			y: startY
+		}];
 		this.status = 'OK';
-		this.moveCount = 0;
 		this.message = 'New Simulation';
 		this.sound = {
 			osc: null,
@@ -96,42 +112,55 @@
 		return board;
 	};
 
-	drawBoard = function (sim) {
-		var _i, _j;
-		var tilePxWidth = 28;
-		var tilePxHeight = 28;
-		var tilePadding = 6;
-		var defaultColor = 'rgb(0, 170, 0)';
-		var occupiedColor = 'rgb(170, 0, 0)';
-		var visitedColor = 'rgb(120, 120, 120)';
-		var canvas = UT.qs('#board');
-		var messageDisplay = UT.qs('.message');
-		messageDisplay.innerHTML = sim.message;
-		canvas.width = (tilePxWidth + tilePadding) * sim.size.width;
-		canvas.height = (tilePxHeight + tilePadding) * sim.size.height;
+	initCanvas = function () {
+		canvas = UT.qs('#board');
 		if (canvas.getContext) {
-			var ctx = canvas.getContext('2d');
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
-			// Row loop
-			for(_i = 0; _i < sim.size.height; _i++) {
-				// Tile loop
-				for(_j = 0; _j < sim.size.width; _j++) {
-					// Draw tile
-					ctx.fillStyle = defaultColor;
-					if (_i === sim.position.y && _j === sim.position.x) {
-						ctx.fillStyle = occupiedColor;
-					} else if (sim.board[_i][_j].visited) {
-						ctx.fillStyle = visitedColor;
-					}
-					ctx.fillRect(
-						_j * (tilePxWidth + tilePadding) + (tilePadding/2),
-						_i * (tilePxHeight + tilePadding) + (tilePadding/2),
-						tilePxWidth,
-						tilePxHeight);
-				}
-			}
+			canvasCtx = canvas.getContext('2d');
 		} else {
 			console.log('Canvas context not supported.');
+		}
+	};
+
+	drawBoard = function (sim) {
+		var _i, _j;
+		canvas.width = (tilePxWidth + tilePxPadding) * sim.size.width;
+		canvas.height = (tilePxHeight + tilePxPadding) * sim.size.height;
+		canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+		// Row loop
+		for(_i = 0; _i < sim.size.height; _i++) {
+			// Tile loop
+			for(_j = 0; _j < sim.size.width; _j++) {
+				// Draw tile
+				canvasCtx.fillStyle = defaultColor;
+				if (_i === sim.position.y && _j === sim.position.x) {
+					canvasCtx.fillStyle = occupiedColor;
+				} else if (sim.board[_i][_j].visited) {
+					canvasCtx.fillStyle = visitedColor;
+				}
+				canvasCtx.fillRect(
+					_j * (tilePxWidth + tilePxPadding) + (tilePxPadding/2),
+					_i * (tilePxHeight + tilePxPadding) + (tilePxPadding/2),
+					tilePxWidth,
+					tilePxHeight);
+			}
+		}
+		return sim;
+	};
+
+	drawPath = function (sim) {
+		var _i, count, lFrom, lTo;
+		var fullTileWidth = tilePxWidth + tilePxPadding;
+		var fullTileHeight = tilePxHeight + tilePxPadding;
+		var xOffset = fullTileWidth / 2;
+		var yOffset = fullTileHeight / 2;
+		canvasCtx.strokeStyle = pathColor;
+		for(_i = 1, count = sim.moves.length; _i < count; _i++) {
+			lFrom = sim.moves[_i - 1];
+			lTo = sim.moves[_i];
+			canvasCtx.beginPath();
+			canvasCtx.moveTo(lFrom.x * fullTileWidth + xOffset, lFrom.y * fullTileHeight + yOffset);
+			canvasCtx.lineTo(lTo.x * fullTileWidth + xOffset, lTo.y * fullTileHeight + yOffset);
+			canvasCtx.stroke();
 		}
 		return sim;
 	};
@@ -139,6 +168,7 @@
 	initSound = function (sim) {
 		sim.sound.osc = audioCtx.createOscillator();
 		sim.sound.osc.frequency.value = soundFreqDefault;
+
 		sim.sound.amp = audioCtx.createGain();
 		sim.sound.amp.gain.value = 0;
 
@@ -180,7 +210,10 @@
 				console.log('Invalid Direction.');
 				return false;
 		}
-		sim.moveCount++;
+		sim.moves.push({
+			x: sim.position.x,
+			y: sim.position.y
+		});
 		if (sim.position.x < 0 ||
 			sim.position.x + 1 > sim.size.width ||
 			sim.position.y < 0 ||
@@ -202,9 +235,10 @@
 	};
 
 	signalState = function (sim) {
+		var messageDisplay = UT.qs('.message');
 		UT.qs('.advance').disabled = true;
 		UT.qs('.run').disabled = true;
-		UT.qs('.move-count').innerHTML = 'Moves: ' + sim.moveCount;
+		UT.qs('.move-count').innerHTML = 'Moves: ' + (sim.moves.length - 1);
 		switch (sim.status) {
 			case 'OK':
 				UT.qs('.advance').disabled = false;
@@ -214,22 +248,24 @@
 				break;
 			case 'LOOP':
 				sim.message = '<strong>Start was Safe</strong>: detected Loop.';
-				playSound(800);
+				playSound(880);
 				break;
 			case 'FELL':
 				sim.message = '<strong>Start was Doomed</strong>: Fell Off at: ' + sim.position.x + ' x ' + sim.position.y;
-				playSound(200);
+				playSound(220);
 				break;
 			default:
 				console.log('Unknown state: ' + sim.status);
 				return false;
 		}
+		messageDisplay.innerHTML = sim.message;
 	};
 
 	advanceSim = function () {
 		movePiece(currentState);
 		signalState(currentState);
 		drawBoard(currentState);
+		drawPath(currentState);
 	};
 
 	runSim = function () {
@@ -239,10 +275,14 @@
 		}
 		signalState(currentState);
 		drawBoard(currentState);
+		drawPath(currentState);
 	};
 
 	resetSim = function () {
 		currentState = new SimState();
+		if (canvasCtx === null) {
+			initCanvas();
+		}
 		initSound(currentState);
 		signalState(currentState);
 		drawBoard(currentState);
