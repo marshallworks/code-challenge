@@ -64,6 +64,7 @@
 			height: boardHeight
 		};
 		this.status = 'OK';
+		this.moveCount = 0;
 		this.message = 'New Simulation';
 		this.sound = {
 			osc: null,
@@ -179,6 +180,7 @@
 				console.log('Invalid Direction.');
 				return false;
 		}
+		sim.moveCount++;
 		if (sim.position.x < 0 ||
 			sim.position.x + 1 > sim.size.width ||
 			sim.position.y < 0 ||
@@ -202,6 +204,7 @@
 	signalState = function (sim) {
 		UT.qs('.advance').disabled = true;
 		UT.qs('.run').disabled = true;
+		UT.qs('.move-count').innerHTML = 'Moves: ' + sim.moveCount;
 		switch (sim.status) {
 			case 'OK':
 				UT.qs('.advance').disabled = false;
