@@ -4,14 +4,34 @@
 
 	// Import
 	var UT = window.UT || {};
+	var AudioContext = window.AudioContext || window.webkitAudioContext;
 
 	// SCOPE:
-	var init, generateBoard, drawBoard, movePiece, advanceSim, runSim, resetSim;
+	var generateBoard,
+		drawBoard,
+		initSound,
+		playSound,
+		movePiece,
+		signalState,
+		advanceSim,
+		runSim,
+		resetSim,
+		init;
 	// Base Board Settings
 	var boardDefaultWidth = 10;
 	var boardDefaultHeight = 10;
 	var tileDirections = ['up', 'right', 'down', 'left'];
 	var currentState = null;
+	var soundFreqDefault = 440;
+
+	// Audio Context
+	var audioCtx = null;
+	try {
+		audioCtx = new AudioContext();
+	}
+	catch(e) {
+		console.log('Web Audio API not supported.');
+	}
 
 	// Simulation State
 	function SimState (boardWidth, boardHeight, startX, startY) {
@@ -43,7 +63,12 @@
 			width: boardWidth,
 			height: boardHeight
 		};
-		this.status = 'New Simulation'
+		this.status = 'OK';
+		this.message = 'New Simulation';
+		this.sound = {
+			osc: null,
+			amp: null
+		};
 		return this;
 	}
 
@@ -79,8 +104,8 @@
 		var occupiedColor = 'rgb(170, 0, 0)';
 		var visitedColor = 'rgb(120, 120, 120)';
 		var canvas = UT.qs('#board');
-		var statusDisplay = UT.qs('.status');
-		statusDisplay.innerHTML = sim.status;
+		var messageDisplay = UT.qs('.message');
+		messageDisplay.innerHTML = sim.message;
 		canvas.width = (tilePxWidth + tilePadding) * sim.size.width;
 		canvas.height = (tilePxHeight + tilePadding) * sim.size.height;
 		if (canvas.getContext) {
@@ -110,6 +135,30 @@
 		return sim;
 	};
 
+	initSound = function (sim) {
+		sim.sound.osc = audioCtx.createOscillator();
+		sim.sound.osc.frequency.value = soundFreqDefault;
+		sim.sound.amp = audioCtx.createGain();
+		sim.sound.amp.gain.value = 0;
+
+		sim.sound.osc.connect(sim.sound.amp);
+		sim.sound.amp.connect(audioCtx.destination);
+		sim.sound.osc.start(0);
+		return sim;
+	};
+
+	playSound = function (freq) {
+		if (freq == null) {
+			freq = soundFreqDefault;
+		}
+		var now = audioCtx.currentTime;
+		currentState.sound.osc.frequency.setValueAtTime(freq, now);
+		currentState.sound.amp.gain.cancelScheduledValues(now);
+		currentState.sound.amp.gain.setValueAtTime(currentState.sound.amp.gain.value, now);
+		currentState.sound.amp.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+		currentState.sound.amp.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+	};
+
 	movePiece = function (sim) {
 		var currentTile = sim.board[sim.position.y][sim.position.x];
 		var newTile = currentTile;
@@ -135,38 +184,64 @@
 			sim.position.y < 0 ||
 			sim.position.y + 1 > sim.size.height)
 		{
-			sim.status = '<strong>Start was Doomed</strong>: Fell Off at: ' + sim.position.x + ' x ' + sim.position.y;
+			sim.status = 'FELL';
 			return false;
 		}
 		newTile = sim.board[sim.position.y][sim.position.x];
 		if (newTile.visited) {
-			sim.status = '<strong>Start was Safe</strong>: detected Loop.';
+			sim.status = 'LOOP';
 			return false;
 		} else {
 			// Simultion can continue
-			sim.status = 'Can continue.';
+			sim.status = 'OK';
 			newTile.visited = true;
 			return true;
 		}
 	};
 
+	signalState = function (sim) {
+		UT.qs('.advance').disabled = true;
+		UT.qs('.run').disabled = true;
+		switch (sim.status) {
+			case 'OK':
+				UT.qs('.advance').disabled = false;
+				UT.qs('.run').disabled = false;
+				sim.message = 'Can continue.';
+				playSound(440);
+				break;
+			case 'LOOP':
+				sim.message = '<strong>Start was Safe</strong>: detected Loop.';
+				playSound(800);
+				break;
+			case 'FELL':
+				sim.message = '<strong>Start was Doomed</strong>: Fell Off at: ' + sim.position.x + ' x ' + sim.position.y;
+				playSound(200);
+				break;
+			default:
+				console.log('Unknown state: ' + sim.status);
+				return false;
+		}
+	};
+
 	advanceSim = function () {
-		UT.qs('.advance').disabled = !movePiece(currentState);
+		movePiece(currentState);
+		signalState(currentState);
 		drawBoard(currentState);
 	};
 
 	runSim = function () {
-		UT.qs('.advance').disabled = true;
 		var result = true;
 		while (result) {
 			result = movePiece(currentState);
 		}
+		signalState(currentState);
 		drawBoard(currentState);
-	}
+	};
 
 	resetSim = function () {
-		UT.qs('.advance').disabled = false;
 		currentState = new SimState();
+		initSound(currentState);
+		signalState(currentState);
 		drawBoard(currentState);
 	};
 
@@ -177,7 +252,7 @@
 		var runButton = UT.qs('.run');
 		var resetButton = UT.qs('.reset');
 		UT.on(advanceButton, 'click', advanceSim);
-		UT.on(runButton, 'click', runSim)
+		UT.on(runButton, 'click', runSim);
 		UT.on(resetButton, 'click', resetSim);
 		resetSim();
 		return true;
