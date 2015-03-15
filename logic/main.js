@@ -14,7 +14,7 @@
 
 	// Functions
 	generateBoard = function (tileWidth, tileHeight) {
-		var _i, _j;
+		var _i, _j, startPos;
 		// Board defaults
 		if (tileWidth == null) {
 			tileWidth = boardTileWidth;
@@ -34,10 +34,15 @@
 				board[_i][_j] = {
 					// Math.random() is 0 inclusive and 1 exclusive; so using Math.floor for an even
 					// distribution of directions on the board.
-					direction: tileDirections[Math.floor(Math.random() * tileDirections.length)]
+					direction: tileDirections[Math.floor(Math.random() * tileDirections.length)],
+					occupied: false,
+					visited: false
 				};
 			}
 		}
+		startPos = board[Math.floor(Math.random() * tileHeight)][Math.floor(Math.random() * tileWidth)];
+		startPos.occupied = true;
+		startPos.visited = true;
 		return board;
 	};
 
@@ -48,18 +53,30 @@
 		}
 		var tilePxWidth = 28;
 		var tilePxHeight = 28;
+		var tilePadding = 6;
+		var defaultColor = 'rgb(0, 170, 0)';
+		var occupiedColor = 'rgb(170, 0, 0)';
+		var visiteColor = 'rgb(120, 120, 120)';
 		var canvas = UT.qs('#board');
+		canvas.width = tilePxWidth * tilePadding * board.length;
+		canvas.height = tilePxHeight * tilePadding * board[0].length;
 		if (canvas.getContext) {
 			var ctx = canvas.getContext('2d');
-			ctx.fillStyle = 'rgb(0, 200, 0)';
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			// Row loop
 			for(_i = 0, height = board.length; _i < height; _i++) {
 				// Tile loop
 				for(_j = 0, width = board[_i].length; _j < width; _j++) {
 					// Draw tile
+					ctx.fillStyle = defaultColor;
+					if (board[_i][_j].occupied) {
+						ctx.fillStyle = occupiedColor;
+					} else if (board[_i][_j].visited) {
+						ctx.fillStyle = visiteColor;
+					}
 					ctx.fillRect(
-						_j * (tilePxWidth + 2),
-						_i * (tilePxHeight + 2),
+						_j * (tilePxWidth + tilePadding) + (tilePadding/2),
+						_i * (tilePxHeight + tilePadding) + (tilePadding/2),
 						tilePxWidth,
 						tilePxHeight);
 				}
