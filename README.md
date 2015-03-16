@@ -8,12 +8,14 @@ Requires:
 
 To run:
 ```
-git clone https://github.com/marshallworks/code-challenge.git
-cd code-challenge
-npm install
-gulp
+$ git clone https://github.com/marshallworks/code-challenge.git
+$ cd code-challenge
+$ npm install
+$ gulp
 ```
-View on Chrome at: http://localhost:8080
+
+View on Chrome at:
+http://localhost:8080
 
 ## Created to solve:
 
