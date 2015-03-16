@@ -319,11 +319,11 @@
 				playSound(440);
 				break;
 			case 'LOOP':
-				sim.message = '<strong>Start was Safe</strong>: detected Loop.';
+				sim.message = 'Detected Loop.';
 				playSound(880);
 				break;
 			case 'FELL':
-				sim.message = '<strong>Start was Doomed</strong>: Fell Off at: ' + currentPath.position.x + ' x ' + currentPath.position.y;
+				sim.message = 'Fell Off at: ' + currentPath.position.x + ' x ' + currentPath.position.y;
 				playSound(220);
 				break;
 			default:
