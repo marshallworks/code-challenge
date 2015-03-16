@@ -13,6 +13,9 @@
   "author": "Gregory Marshall",
   "license": "ISC",
   "devDependencies": {
-    "gulp": "^3.8.11"
+    "gulp": "^3.8.11",
+    "gulp-livereload": "^3.8.0",
+    "gulp-util": "^3.0.4",
+    "node-static": "^0.7.6"
   }
 }

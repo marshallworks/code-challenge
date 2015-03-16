@@ -444,7 +444,7 @@
 
 	// Initializer
 	init = function () {
-		console.log('Page Load');
+		console.log('Page Load Complete');
 		var setButton = UT.qs('.set');
 		var nextButton = UT.qs('.next');
 		var completeButton = UT.qs('.complete');

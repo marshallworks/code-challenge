@@ -1,5 +1,21 @@
-Solution To
-===========
+Code Challenge
+==============
+
+Requires:
+* node.js
+* npm
+* gulp (installed globally)
+
+To run:
+```
+git clone https://github.com/marshallworks/code-challenge.git
+cd code-challenge
+npm install
+gulp
+```
+View on Chrome at: http://localhost:8080
+
+## Created to solve:
 
 Use your favorite in-browser, plugin-free* approach to visualize a solution for the following problem:
 
