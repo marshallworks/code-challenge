@@ -14,11 +14,11 @@
 			<hr>
 			<label for="board-width">
 				Width:
-				<input type="number" id="board-width" name="board-width" step="1">
+				<input type="number" id="board-width" name="board-width" step="1" value="28">
 			</label>
 			<label for="board-height">
 				Height:
-				<input type="number" id="board-height" name="board-height" step="1">
+				<input type="number" id="board-height" name="board-height" step="1" value="28">
 			</label>
 			<label for="start-x">
 				Start X:
@@ -28,6 +28,8 @@
 				Start Y:
 				<input type="number" id="start-y" name="start-y" step="1">
 			</label>
+			<button class="set">Set</button>
+			<button class="reset">Reset</button>
 			<hr>
 			<p>
 				<strong>By Pos</strong><br>
@@ -38,12 +40,19 @@
 				<strong>By Board</strong><br>
 				<button class="advance">Advance</button>
 				<button class="run">Run</button>
-				<button class="reset">Reset</button>
 			</p>
 			<hr>
-			<span class="message">New</span><br><br>
-			<span class="move-count">0</span>
-			<hr>
+			<p class="report">
+				<strong>Report by Path</strong><br>
+				Status: <span class="message">New</span><br>
+				Path Moves: <span class="move-count">0</span>
+			</p>
+			<p class="report">
+				<strong>Report by Board</strong><br>
+				Paths Computed: <span class="path-number">0</span><br>
+				Paths that ended in Loop: <span class="loop-number">0</span><br>
+				Paths that ended in falls: <span class="fell-number">0</span>
+			</p>
 		</div>
 	</div>
 </body>

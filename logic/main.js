@@ -16,26 +16,38 @@
 		playSound,
 		movePiece,
 		signalState,
-		nextSim,
-		completePathSim,
-		advanceSim,
-		advanceAndComplete,
-		runSim,
+		simCompletePath,
+		simAdvancePathStart,
+		simAdvanceAndComplete,
+		getSimValues,
 		resetSim,
+		pathNext,
+		pathComplete,
+		boardAdvancePathStart,
+		boardRunAllPaths,
+		boardStart,
+		boardReset,
 		init;
+
 	// Base Board Settings
-	var boardDefaultWidth = 16;
-	var boardDefaultHeight = 16;
+	var boardDefaultWidth = 28;
+	var boardDefaultHeight = 28;
 	var tileDirections = ['up', 'right', 'down', 'left'];
 	var currentState = null;
-	var tilePxWidth = 8;
-	var tilePxHeight = 8;
-	var tilePxPadding = 26;
+	var tilePxWidth = 4;
+	var tilePxHeight = 4;
+	var tilePxPadding = 16;
 	var defaultColor = 'rgb(66, 77, 88)';
 	var occupiedColor = 'rgb(158, 11, 15)';
 	var visitedColor = 'rgb(60, 184, 120)';
-	var pathColor = 'rgba(20, 220, 250, 0.7)';
+	var pathColor = 'rgba(20, 220, 250, 0.5)';
 	var soundFreqDefault = 440;
+
+	// Set Board Settings
+	var setWidth = null;
+	var setHeight = null;
+	var setStartX = null;
+	var setStartY = null;
 
 	// Canvas Context
 	var canvas = null;
@@ -75,7 +87,7 @@
 		this.moves.push(new Position(startPos.x, startPos.y));
 		this.result = '';
 		return this;
-	};
+	}
 
 	// Simulation State
 	function SimState (boardWidth, boardHeight, startX, startY) {
@@ -103,6 +115,7 @@
 			height: boardHeight
 		};
 		this.board = generateBoard(boardWidth, boardHeight);
+		this.board[startY][startX].visitedBy.push(0);
 		this.board[startY][startX].visited = true;
 		this.status = 'OK';
 		this.message = 'New Simulation';
@@ -228,9 +241,11 @@
 		currentState.sound.amp.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
 	};
 
-	movePiece = function (sim) {
-		var currentPathIndex = sim.paths.length - 1;
-		var currentPath = sim.paths[currentPathIndex];
+	movePiece = function (sim, pathIndex) {
+		if (pathIndex == null) {
+			pathIndex = 0;
+		}
+		var currentPath = sim.paths[pathIndex];
 		var currentTile = sim.board[currentPath.position.y][currentPath.position.x];
 		var newTile = currentTile;
 		switch (currentTile.direction) {
@@ -257,27 +272,45 @@
 			currentPath.position.y + 1 > sim.size.height)
 		{
 			sim.status = 'FELL';
+			currentPath.result = 'FELL';
 			return false;
 		}
 		newTile = sim.board[currentPath.position.y][currentPath.position.x];
-		if (newTile.visitedBy.indexOf(currentPathIndex) !== -1) {
+		if (newTile.visitedBy.indexOf(pathIndex) !== -1) {
 			sim.status = 'LOOP';
+			currentPath.result = 'LOOP';
 			return false;
 		} else {
 			// Simultion can continue
 			sim.status = 'OK';
-			newTile.visitedBy.push(currentPathIndex);
+			newTile.visitedBy.push(pathIndex);
 			newTile.visited = true;
 			return true;
 		}
 	};
 
 	signalState = function (sim) {
+		var _i, loopPath;
+		var totalPaths = sim.paths.length;
+		var currentPath = sim.paths[totalPaths - 1];
 		var messageDisplay = UT.qs('.message');
-		var currentPath = sim.paths[sim.paths.length - 1];
+		var loopCount = 0;
+		var fellCount = 0;
+		for (_i = 0; _i < totalPaths; _i++) {
+			loopPath = sim.paths[_i];
+			if (loopPath.result === 'LOOP') {
+				loopCount++;
+			}
+			if (loopPath.result === 'FELL') {
+				fellCount++;
+			}
+		}
 		UT.qs('.next').disabled = true;
 		UT.qs('.complete').disabled = true;
-		UT.qs('.move-count').innerHTML = 'Moves: ' + (currentPath.moves.length - 1);
+		UT.qs('.move-count').innerHTML = currentPath.moves.length - 1;
+		UT.qs('.path-number').innerHTML = totalPaths;
+		UT.qs('.loop-number').innerHTML = loopCount;
+		UT.qs('.fell-number').innerHTML = fellCount;
 		switch (sim.status) {
 			case 'OK':
 				UT.qs('.next').disabled = false;
@@ -286,12 +319,10 @@
 				playSound(440);
 				break;
 			case 'LOOP':
-				currentPath.result = 'LOOP';
 				sim.message = '<strong>Start was Safe</strong>: detected Loop.';
 				playSound(880);
 				break;
 			case 'FELL':
-				currentPath.result = 'FELL'
 				sim.message = '<strong>Start was Doomed</strong>: Fell Off at: ' + currentPath.position.x + ' x ' + currentPath.position.y;
 				playSound(220);
 				break;
@@ -302,107 +333,131 @@
 		messageDisplay.innerHTML = sim.message;
 	};
 
-	nextSim = function () {
-		movePiece(currentState);
-		signalState(currentState);
-		drawBoard(currentState);
-		drawPaths(currentState);
-	};
-
-	advanceSim = function () {
-		var currentPath = currentState.paths[currentState.paths.length - 1];
-		var newX = currentPath.moves[0].x + 1;
-		var newY = currentPath.moves[0].y;
-		if (newX >= currentState.size.width) {
-			newX = 0;
-			newY++;
-			if (newY >= currentState.size.height) {
-				newY = 0;
-			}
-		}
-		var newStart = new Position(newX, newY);
-		var newPath = new Path(newStart);
-		currentState.paths.push(newPath);
-		currentState.status = 'OK';
-		signalState(currentState);
-		drawBoard(currentState);
-		drawPaths(currentState);
-	};
-
-	completePathSim = function () {
+	simCompletePath = function (sim, pathIndex) {
 		var result = true;
 		while (result) {
-			result = movePiece(currentState);
+			result = movePiece(sim, pathIndex);
 		}
-		signalState(currentState);
-		drawBoard(currentState);
-		drawPaths(currentState);
+		return result;
 	};
 
-	advanceAndComplete = function () {
-		var maxPaths = currentState.size.width * currentState.size.height;
-		if (currentState.paths.length <= maxPaths) {
-			advanceSim();
-			completePathSim();
+	simAdvancePathStart = function (sim) {
+		var maxPaths = sim.size.width * sim.size.height;
+		if (sim.paths.length < maxPaths) {
+			var currentPath = sim.paths[sim.paths.length - 1];
+			var newX = currentPath.moves[0].x + 1;
+			var newY = currentPath.moves[0].y;
+			if (newX >= sim.size.width) {
+				newX = 0;
+				newY++;
+				if (newY >= sim.size.height) {
+					newY = 0;
+				}
+			}
+			var newStart = new Position(newX, newY);
+			var newPath = new Path(newStart);
+			sim.paths.push(newPath);
+			sim.status = 'OK';
+		}
+	};
+
+	simAdvanceAndComplete = function (sim) {
+		var maxPaths = sim.size.width * sim.size.height;
+		if (sim.paths.length < maxPaths) {
+			simAdvancePathStart(sim);
+			simCompletePath(sim, sim.paths.length - 1);
 			return true;
 		} else {
 			return false;
 		}
 	};
 
-	runSim = function () {
-		var result = true;
-		completePathSim();
-		while (result) {
-			result = advanceAndComplete();
-		}
-		console.log(currentState);
+	getSimValues = function () {
+		var domWidth = UT.getInt(UT.qs('#board-width').value);
+		var domHeight = UT.getInt(UT.qs('#board-height').value);
+		var domStartX = UT.getInt(UT.qs('#start-x').value);
+		var domStartY = UT.getInt(UT.qs('#start-y').value);
+		setWidth = domWidth !== false ? domWidth : null;
+		setHeight = domHeight !== false ? domHeight : null;
+		setStartX = domStartX !== false ? domStartX : null;
+		setStartY = domStartY !== false ? domStartY : null;
 	};
 
 	resetSim = function () {
-		var makeWidth = null;
-		var makeHeight = null;
-		var makeStartX = null;
-		var makeStartY = null;
-		var setWidth = UT.getInt(UT.qs('#board-width').value);
-		var setHeight = UT.getInt(UT.qs('#board-height').value);
-		var setStartX = UT.getInt(UT.qs('#start-x').value);
-		var setStartY = UT.getInt(UT.qs('#start-y').value);
-		if (setWidth !== false) {
-			makeWidth = setWidth;
+		getSimValues();
+		currentState = new SimState(setWidth, setHeight, setStartX, setStartY);
+		return currentState;
+	};
+
+	// Event Functions
+	pathNext = function () {
+		movePiece(currentState, currentState.paths.length - 1);
+		signalState(currentState);
+		drawBoard(currentState);
+		drawPaths(currentState);
+	};
+
+	pathComplete = function () {
+		simCompletePath(currentState, currentState.paths.length - 1);
+		signalState(currentState);
+		drawBoard(currentState);
+		drawPaths(currentState);
+	};
+
+	boardAdvancePathStart = function () {
+		simCompletePath(currentState, currentState.paths.length - 1);
+		signalState(currentState);
+		simAdvancePathStart(currentState);
+		drawBoard(currentState);
+		drawPaths(currentState);
+		UT.qs('.next').disabled = false;
+		UT.qs('.complete').disabled = false;
+	};
+
+	boardRunAllPaths = function () {
+		var result = true;
+		simCompletePath(currentState, currentState.paths.length - 1);
+		while (result) {
+			result = simAdvanceAndComplete(currentState);
 		}
-		if (setHeight !== false) {
-			makeHeight = setHeight;
-		}
-		if (setStartX !== false) {
-			makeStartX = setStartX;
-		}
-		if (setStartY !== false) {
-			makeStartY = setStartY;
-		}
-		currentState = new SimState(makeWidth, makeHeight, makeStartX, makeStartY);
+		signalState(currentState);
+		drawBoard(currentState);
+		drawPaths(currentState);
+	};
+
+	boardStart = function () {
+		var newSim = resetSim();
 		if (canvasCtx === null) {
 			initCanvas();
 		}
-		initSound(currentState);
-		signalState(currentState);
-		drawBoard(currentState);
+		initSound(newSim);
+		signalState(newSim);
+		drawBoard(newSim);
+	};
+
+	boardReset = function () {
+		var newSim = resetSim();
+		initSound(newSim);
+		signalState(newSim);
+		drawBoard(newSim);
 	};
 
 	// Initializer
 	init = function () {
 		console.log('Page Load');
+		var setButton = UT.qs('.set');
 		var nextButton = UT.qs('.next');
 		var completeButton = UT.qs('.complete');
 		var advanceButton = UT.qs('.advance');
 		var runButton = UT.qs('.run');
 		var resetButton = UT.qs('.reset');
-		UT.on(nextButton, 'click', nextSim);
-		UT.on(completeButton, 'click', completePathSim);
-		UT.on(advanceButton, 'click', advanceSim);
-		UT.on(runButton, 'click', runSim);
-		UT.on(resetButton, 'click', resetSim);
-		resetSim();
+		UT.on(setButton, 'click', boardReset);
+		UT.on(nextButton, 'click', pathNext);
+		UT.on(completeButton, 'click', pathComplete);
+		UT.on(advanceButton, 'click', boardAdvancePathStart);
+		UT.on(runButton, 'click', boardRunAllPaths);
+		UT.on(resetButton, 'click', boardReset);
+		boardStart();
 		return true;
 	};
 
