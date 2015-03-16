@@ -14,9 +14,7 @@ $ npm install
 $ gulp
 ```
 
-View on Chrome at:
-
-http://localhost:8080
+View on Chrome at: [http://localhost:8080](http://localhost:8080)
 
 ## Created to solve:
 
