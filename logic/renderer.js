@@ -10,9 +10,6 @@
 	var pathWidth = '2';
 	var pathTemplate = '<path d="{{points}}" fill="none" stroke="{{color}}" stroke-width="{{width}}"></path>';
 
-	// Scope
-	var time, animDraw, directionCorrectedLT, remStartCoord, remEndCoord, remCurCoord;
-
 	function Coord (attr) {
 		if (attr == null) {
 			attr = {};
@@ -123,21 +120,6 @@
 		return path;
 	};
 
-	Renderer.prototype.animDrawMove = function (fromPos, toPos) {
-		var fullTileWidth = this.tilePxWidth + this.tilePxPadding;
-		var fullTileHeight = this.tilePxHeight + this.tilePxPadding;
-		var xOffset = fullTileWidth / 2;
-		var yOffset = fullTileHeight / 2;
-		var startX = fromPos.x * fullTileWidth + xOffset;
-		var startY = fromPos.y * fullTileHeight + yOffset;
-		var endX = toPos.x * fullTileWidth + xOffset;
-		var endY = toPos.y * fullTileHeight + yOffset;
-		remStartCoord = new Coord(startX, startY);
-		remEndCoord = new Coord(endX, endY);
-		remCurCoord = new Coord(startX, startY);
-		animDraw();
-	};
-
 	Renderer.prototype.posToCoord = function (pos) {
 		var fullTileWidth = this.tilePxWidth + this.tilePxPadding;
 		var fullTileHeight = this.tilePxHeight + this.tilePxPadding;
@@ -147,40 +129,6 @@
 			x: pos.x * fullTileWidth + xOffset,
 			y: pos.y * fullTileHeight + yOffset
 		});
-	};
-
-	animDraw = function () {
-		if (directionCorrectedLT(startCoord, endCoord, curCoord)) {
-			requestAnimationFrame(animDraw);
-		}
-		var now = new Date().getTime();
-		var dt = now - (time || now);
-		time = now;
-
-	};
-
-	directionCorrectedLT = function (startCoord, endCoord, curCoord) {
-		var xLess = true;
-		var yLess = true;
-		if (startCoord.x <= endCoord.x) {
-			if (curCoord.x <= endCoord.x) {
-				xLess = false;
-			}
-		} else {
-			if (curCoord.x >= endCoord.x) {
-				xLess = false;
-			}
-		}
-		if (startCoord.y <= endCoord.y) {
-			if (curCoord.y <= endCoord.y) {
-				yLess = false;
-			}
-		} else {
-			if (curCoord.y >= endCoord.y) {
-				yLess = false;
-			}
-		}
-		return xLess && yLess;
 	};
 
 	window.Renderer = Renderer;
