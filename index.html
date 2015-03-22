@@ -15,15 +15,16 @@
 <body>
 	<div class="container">
 		<canvas id="board" width="300" height="300"></canvas>
+		<svg id="paths" width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" version="1.1"></svg>
 		<div class="ui">
 			<hr>
 			<label for="board-width">
 				Width:
-				<input type="number" id="board-width" name="board-width" step="1" value="28">
+				<input type="number" id="board-width" name="board-width" step="1" value="16">
 			</label>
 			<label for="board-height">
 				Height:
-				<input type="number" id="board-height" name="board-height" step="1" value="28">
+				<input type="number" id="board-height" name="board-height" step="1" value="16">
 			</label>
 			<label for="start-x">
 				Start X:
@@ -37,21 +38,29 @@
 			<button class="reset">Reset</button>
 			<hr>
 			<p>
-				<strong>By Pos</strong><br>
-				<button class="next">Next</button>
-				<button class="complete">Complete</button>
+				<strong>By Path</strong><br>
+				<button class="path-next">Next</button>
+				<button class="path-play">Play</button>
+				<button class="path-stop">Stop</button>
+				<button class="path-complete">Complete</button>
 				<span class="description">
 					Next - steps forward by one move.<br>
+					Play - plays the current path till the end.<br>
+					Stop - stop the current path play.<br>
 					Complete - Completes the current path.
 				</span>
 			</p>
 			<p>
-				<strong>By Path</strong><br>
-				<button class="advance">Advance</button>
-				<button class="run">Run</button>
+				<strong>By Board</strong><br>
+				<button class="board-next">Next</button>
+				<button class="board-play">Play</button>
+				<button class="board-stop">Stop</button>
+				<button class="board-complete">Complete</button>
 				<span class="description">
-					Advance - completes the current path and advances the start position by one for the next path.<br>
-					Run - completes all paths on the board.
+					Next - completes the current path and advances the start position by one for the next path.<br>
+					Play - plays the current board till the end.<br>
+					Stop - stop the board animation.<br>
+					Complete - completes all paths on the board.
 				</span>
 			</p>
 			<hr>

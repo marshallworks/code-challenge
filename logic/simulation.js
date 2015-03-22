@@ -18,6 +18,7 @@
 		this.sound = new Sound();
 		this.renderer = new Renderer({
 			canvas: UT.qs('#board'),
+			paths: UT.qs('#paths'),
 			boardWidth: this.board.width,
 			boardHeight: this.board.height
 		});
@@ -120,18 +121,21 @@
 				fellCount++;
 			}
 		}
-		UT.qs('.next').disabled = true;
-		UT.qs('.complete').disabled = true;
-		UT.qs('.advance').disabled = false;
-		UT.qs('.run').disabled = false;
+		UT.qs('.path-next').disabled = true;
+		UT.qs('.path-complete').disabled = true;
+		UT.qs('.path-play').disabled = true;
+		UT.qs('.board-next').disabled = false;
+		UT.qs('.board-play').disabled = false;
+		UT.qs('.board-complete').disabled = false;
 		UT.qs('.move-count').innerHTML = currentPath.moves.length - 1;
 		UT.qs('.path-number').innerHTML = totalPaths;
 		UT.qs('.loop-number').innerHTML = loopCount;
 		UT.qs('.fell-number').innerHTML = fellCount;
 		switch (this.status) {
 			case 'OK':
-				UT.qs('.next').disabled = false;
-				UT.qs('.complete').disabled = false;
+				UT.qs('.path-next').disabled = false;
+				UT.qs('.path-complete').disabled = false;
+				UT.qs('.path-play').disabled = false;
 				this.message = 'Can continue.';
 				this.sound.playFreq(440);
 				break;
@@ -144,8 +148,9 @@
 				this.sound.playFreq(220);
 				break;
 			case 'COMPLETE':
-				UT.qs('.advance').disabled = true;
-				UT.qs('.run').disabled = true;
+				UT.qs('.board-next').disabled = true;
+				UT.qs('.board-play').disabled = true;
+				UT.qs('.board-complete').disabled = true;
 				this.message = 'Board is Complete';
 				this.sound.playFreq(110);
 				break;
@@ -159,7 +164,7 @@
 
 	Simulation.prototype.render = function () {
 		this.renderer.drawBoard(this);
-		this.renderer.drawPaths(this);
+		this.renderer.drawSVGPaths(this);
 		return this;
 	};
 

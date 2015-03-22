@@ -11,8 +11,12 @@
 		getValues,
 		pathNext,
 		pathComplete,
+		pathPlay,
 		boardAdvance,
 		boardComplete,
+		boardPlay,
+		stopPlay,
+		interval,
 		init;
 
 	// Base Board Settings
@@ -52,6 +56,16 @@
 		currentState.completePath().signal().render();
 	};
 
+	pathPlay = function () {
+		currentState.advancePath().render().signal();
+		interval = window.setInterval(function () {
+			currentState.advancePath().render().signal();
+			if (!currentState.isOk()) {
+				window.clearInterval(interval);
+			}
+		}, 600);
+	};
+
 	boardAdvance = function () {
 		currentState.completePath()
 			.signal()
@@ -64,21 +78,38 @@
 		currentState.completeBoard().signal().render();
 	};
 
+	boardPlay = function () {
+		currentState.advancePath().render().signal();
+		interval = window.setInterval(function () {
+			if (!currentState.isOk()) {
+				currentState.advanceBoard().render().signal();
+			} else {
+				currentState.advancePath().render().signal();
+			}
+			if (currentState.isComplete()) {
+				window.clearInterval(interval);
+			}
+		}, 34);
+	};
+
+	stopPlay = function () {
+		window.clearInterval(interval);
+		interval = null;
+	};
+
 	// Initializer
 	init = function () {
 		console.log('Page Load Complete');
-		var setButton = UT.qs('.set');
-		var nextButton = UT.qs('.next');
-		var completeButton = UT.qs('.complete');
-		var advanceButton = UT.qs('.advance');
-		var runButton = UT.qs('.run');
-		var resetButton = UT.qs('.reset');
-		UT.on(setButton, 'click', reset);
-		UT.on(nextButton, 'click', pathNext);
-		UT.on(completeButton, 'click', pathComplete);
-		UT.on(advanceButton, 'click', boardAdvance);
-		UT.on(runButton, 'click', boardComplete);
-		UT.on(resetButton, 'click', reset);
+		UT.on(UT.qs('.set'), 'click', reset);
+		UT.on(UT.qs('.reset'), 'click', reset);
+		UT.on(UT.qs('.path-next'), 'click', pathNext);
+		UT.on(UT.qs('.path-play'), 'click', pathPlay);
+		UT.on(UT.qs('.path-stop'), 'click', stopPlay);
+		UT.on(UT.qs('.path-complete'), 'click', pathComplete);
+		UT.on(UT.qs('.board-next'), 'click', boardAdvance);
+		UT.on(UT.qs('.board-play'), 'click', boardPlay);
+		UT.on(UT.qs('.board-stop'), 'click', stopPlay);
+		UT.on(UT.qs('.board-complete'), 'click', boardComplete);
 		reset();
 		return true;
 	};

@@ -58,6 +58,12 @@ body {
 	font-family: sans-serif;
 }
 
+#board, #paths {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
 strong {
 	font-weight: bold;
 }
