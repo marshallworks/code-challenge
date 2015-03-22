@@ -4,13 +4,12 @@
 
 	// Import
 	var UT = window.UT || {};
-	var AudioContext = window.AudioContext || window.webkitAudioContext;
+	var Board = window.Board || {};
 	var Renderer = window.Renderer || {};
 	var Sound = window.Sound || {};
 
 	// SCOPE:
-	var generateBoard,
-		movePiece,
+	var movePiece,
 		signalState,
 		simCompletePath,
 		simAdvancePathStart,
@@ -26,7 +25,6 @@
 		init;
 
 	// Base Board Settings
-	var tileDirections = ['up', 'right', 'down', 'left'];
 	var currentState = null;
 
 	// Set Board Settings
@@ -65,12 +63,6 @@
 	// Simulation State
 	function SimState (boardWidth, boardHeight, startX, startY) {
 		// Set defaults
-		if (boardWidth == null) {
-			boardWidth = boardDefaultWidth;
-		}
-		if (boardHeight == null) {
-			boardHeight = boardDefaultHeight;
-		}
 		if (startX == null) {
 			startX = Math.floor(Math.random() * boardWidth);
 		}
@@ -87,9 +79,8 @@
 			width: boardWidth,
 			height: boardHeight
 		};
-		this.board = generateBoard(boardWidth, boardHeight);
-		this.board[startY][startX].visitedBy.push(0);
-		this.board[startY][startX].visited = true;
+		this.board = new Board(boardWidth, boardHeight);
+		this.board.visitTile(startPos, 0);
 		this.status = 'OK';
 		this.message = 'New Simulation';
 		this.paths = [];
@@ -104,37 +95,12 @@
 	}
 
 	// Functions
-	generateBoard = function (tileWidth, tileHeight) {
-		var _i, _j;
-		// Create board
-		var board = [];
-		// Loop to create tile rows.
-		for (_i = 0; _i < tileHeight; _i++) {
-			// Create row
-			board[_i] = [];
-			// Loop to create tiles.
-			for (_j = 0; _j < tileWidth; _j++) {
-				// Create tile, as object assuming additional properties
-				board[_i][_j] = {
-					// Math.random() is 0 inclusive and 1 exclusive; so using Math.floor for an even
-					// distribution of directions on the board.
-					direction: tileDirections[Math.floor(Math.random() * tileDirections.length)],
-					visitedBy: [],
-					visited: false
-				};
-			}
-		}
-		return board;
-	};
-
 	movePiece = function (sim, pathIndex) {
 		if (pathIndex == null) {
 			pathIndex = 0;
 		}
 		var currentPath = sim.paths[pathIndex];
-		var currentTile = sim.board[currentPath.position.y][currentPath.position.x];
-		var newTile = currentTile;
-		switch (currentTile.direction) {
+		switch (sim.board.getTileDirection(currentPath.position)) {
 			case 'up':
 				currentPath.position.y--;
 				break;
@@ -161,16 +127,14 @@
 			currentPath.result = 'FELL';
 			return false;
 		}
-		newTile = sim.board[currentPath.position.y][currentPath.position.x];
-		if (newTile.visitedBy.indexOf(pathIndex) !== -1) {
+		if (sim.board.wasTileVisitedByPath(currentPath.position, pathIndex)) {
 			sim.status = 'LOOP';
 			currentPath.result = 'LOOP';
 			return false;
 		} else {
 			// Simultion can continue
 			sim.status = 'OK';
-			newTile.visitedBy.push(pathIndex);
-			newTile.visited = true;
+			sim.board.visitTile(currentPath.position, pathIndex);
 			return true;
 		}
 	};

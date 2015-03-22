@@ -2,9 +2,6 @@
 
 	'use strict';
 
-	// Internal Methods
-	var drawPath;
-
 	// Constants
 	var defaultColor = 'rgb(66, 77, 88)';
 	var occupiedColor = 'rgb(158, 11, 15)';
@@ -39,7 +36,7 @@
 				this.ctx.fillStyle = defaultColor;
 				if (_i === recentPath.position.y && _j === recentPath.position.x) {
 					this.ctx.fillStyle = occupiedColor;
-				} else if (sim.board[_i][_j].visited) {
+				} else if (sim.board.wasTileVisited({x: _j, y: _i})) {
 					this.ctx.fillStyle = visitedColor;
 				}
 				this.ctx.fillRect(

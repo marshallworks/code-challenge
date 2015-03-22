@@ -2,6 +2,9 @@
 
 	'use strict';
 
+	// Imports
+	var AudioContext = window.AudioContext || window.webkitAudioContext;
+
 	// Constants
 	var soundFreqDefault = 440;
 
@@ -43,4 +46,4 @@
 
 	window.Sound = Sound;
 
-}(window))
+}(window));
