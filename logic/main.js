@@ -4,12 +4,14 @@
 
 	// Import
 	var UT = window.UT || {};
+	var Position = window.Position || {};
+	var Path = window.Path || {};
 	var Board = window.Board || {};
 	var Renderer = window.Renderer || {};
 	var Sound = window.Sound || {};
 
 	// SCOPE:
-	var movePiece,
+	var advance,
 		signalState,
 		simCompletePath,
 		simAdvancePathStart,
@@ -33,108 +35,59 @@
 	var setStartX = null;
 	var setStartY = null;
 
-	// Position Type
-	function Position (x, y) {
-		// Ensure position uses integers
-		this.x = UT.isNumber(x) ? UT.getInt(x) : 0;
-		this.y = UT.isNumber(y) ? UT.getInt(y) : 0;
-		return this;
-	}
-	// Position Equality
-	Position.prototype.equal = function (comparePos) {
-		if (comparePos instanceof Position) {
-			return (this.x === comparePos.x && this.y === comparePos.y);
-		}
-		return false;
-	};
-
-	// Path Type
-	function Path (startPos) {
-		if (startPos == null || !(startPos instanceof Position)) {
-			startPos = new Position(0, 0);
-		}
-		this.position = startPos;
-		this.moves = [];
-		this.moves.push(new Position(startPos.x, startPos.y));
-		this.result = '';
-		return this;
-	}
-
 	// Simulation State
-	function SimState (boardWidth, boardHeight, startX, startY) {
-		// Set defaults
-		if (startX == null) {
-			startX = Math.floor(Math.random() * boardWidth);
-		}
-		if (startY == null) {
-			startY = Math.floor(Math.random() * boardHeight);
-		}
-		if (startX < 0 || startY < 0 || startX > boardWidth - 1 || startY > boardHeight - 1) {
-			console.log('Board Starting Position was out of bounds: x->' + startX + ' y->' + startY);
-			startX = 0;
-			startY = 0;
-		}
-		var startPos = new Position(startX, startY);
-		this.size = {
-			width: boardWidth,
-			height: boardHeight
-		};
+	function SimState (boardWidth, boardHeight) {
 		this.board = new Board(boardWidth, boardHeight);
-		this.board.visitTile(startPos, 0);
+		this.paths = [];
 		this.status = 'OK';
 		this.message = 'New Simulation';
-		this.paths = [];
-		this.paths.push(new Path(startPos));
 		this.sound = new Sound();
 		this.renderer = new Renderer({
 			canvas: UT.qs('#board'),
-			boardWidth: boardWidth,
-			boardHeight: boardHeight
+			boardWidth: board.width,
+			boardHeight: board.height
 		});
 		return this;
 	}
 
+	SimState.prototype.start = function (startX, startY) {
+		if (startX == null) {
+			startX = Math.floor(Math.random() * this.board.width);
+		}
+		if (startY == null) {
+			startY = Math.floor(Math.random() * this.board.height);
+		}
+		var startPos = new Position(startX, startY);
+		if (!this.board.isPositionInBounds(startPos)) {
+			console.log('Board Starting Position was out of bounds: x->' + startX + ' y->' + startY);
+			startPos = new Position(0, 0);
+		}
+		var startPath = new Path(startPos);
+		this.paths.push(startPath);
+		this.board.visitTile(startPath);
+		return this;
+	};
+
 	// Functions
-	movePiece = function (sim, pathIndex) {
+	advance = function (sim, pathIndex) {
 		if (pathIndex == null) {
 			pathIndex = 0;
 		}
 		var currentPath = sim.paths[pathIndex];
-		switch (sim.board.getTileDirection(currentPath.position)) {
-			case 'up':
-				currentPath.position.y--;
-				break;
-			case 'right':
-				currentPath.position.x++;
-				break;
-			case 'down':
-				currentPath.position.y++;
-				break;
-			case 'left':
-				currentPath.position.x--;
-				break;
-			default:
-				console.log('Invalid Direction.');
-				return false;
-		}
-		currentPath.moves.push(new Position(currentPath.position.x, currentPath.position.y));
-		if (currentPath.position.x < 0 ||
-			currentPath.position.x + 1 > sim.size.width ||
-			currentPath.position.y < 0 ||
-			currentPath.position.y + 1 > sim.size.height)
-		{
+		var newPos = currentPath.move(sim.board.getTileDirection(currentPath.getPosition())).getPosition();
+		if (!sim.board.isPositionInBounds(newPos)) {
 			sim.status = 'FELL';
-			currentPath.result = 'FELL';
+			currentPath.setResult('FELL');
 			return false;
 		}
-		if (sim.board.wasTileVisitedByPath(currentPath.position, pathIndex)) {
+		if (sim.board.wasTileVisitedByPath(currentPath)) {
 			sim.status = 'LOOP';
-			currentPath.result = 'LOOP';
+			currentPath.setResult('LOOP');
 			return false;
 		} else {
 			// Simultion can continue
 			sim.status = 'OK';
-			sim.board.visitTile(currentPath.position, pathIndex);
+			sim.board.visitTile(currentPath);
 			return true;
 		}
 	};
@@ -143,6 +96,7 @@
 		var _i, loopPath;
 		var totalPaths = sim.paths.length;
 		var currentPath = sim.paths[totalPaths - 1];
+		var currentPos = currentPath.getPosition();
 		var messageDisplay = UT.qs('.message');
 		var loopCount = 0;
 		var fellCount = 0;
@@ -173,7 +127,7 @@
 				sim.sound.playFreq(880);
 				break;
 			case 'FELL':
-				sim.message = 'Fell Off at: ' + currentPath.position.x + ' x ' + currentPath.position.y;
+				sim.message = 'Fell Off at: ' + currentPos.x + ' x ' + currentPos.y;
 				sim.sound.playFreq(220);
 				break;
 			default:
@@ -186,21 +140,21 @@
 	simCompletePath = function (sim, pathIndex) {
 		var result = true;
 		while (result) {
-			result = movePiece(sim, pathIndex);
+			result = advance(sim, pathIndex);
 		}
 		return result;
 	};
 
 	simAdvancePathStart = function (sim) {
-		var maxPaths = sim.size.width * sim.size.height;
+		var maxPaths = sim.board.width * sim.board.height;
 		if (sim.paths.length < maxPaths) {
 			var currentPath = sim.paths[sim.paths.length - 1];
 			var newX = currentPath.moves[0].x + 1;
 			var newY = currentPath.moves[0].y;
-			if (newX >= sim.size.width) {
+			if (newX >= sim.board.width) {
 				newX = 0;
 				newY++;
-				if (newY >= sim.size.height) {
+				if (newY >= sim.board.height) {
 					newY = 0;
 				}
 			}
@@ -212,7 +166,7 @@
 	};
 
 	simAdvanceAndComplete = function (sim) {
-		var maxPaths = sim.size.width * sim.size.height;
+		var maxPaths = sim.board.width * sim.board.height;
 		if (sim.paths.length < maxPaths) {
 			simAdvancePathStart(sim);
 			simCompletePath(sim, sim.paths.length - 1);
@@ -235,13 +189,13 @@
 
 	resetSim = function () {
 		getSimValues();
-		currentState = new SimState(setWidth, setHeight, setStartX, setStartY);
+		currentState = new SimState(setWidth, setHeight).start(setStartX, setStartY);
 		return currentState;
 	};
 
 	// Event Functions
 	pathNext = function () {
-		movePiece(currentState, currentState.paths.length - 1);
+		advance(currentState, currentState.paths.length - 1);
 		signalState(currentState);
 		currentState.renderer.drawBoard(currentState);
 		currentState.renderer.drawPaths(currentState);

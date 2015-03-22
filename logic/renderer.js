@@ -24,17 +24,17 @@
 
 	Renderer.prototype.drawBoard = function (sim) {
 		var _i, _j;
-		var recentPath = sim.paths[sim.paths.length - 1];
-		this.canvas.width = (this.tilePxWidth + this.tilePxPadding) * sim.size.width;
-		this.canvas.height = (this.tilePxHeight + this.tilePxPadding) * sim.size.height;
+		var recentPathPos = sim.paths[sim.paths.length - 1].getPosition();
+		this.canvas.width = (this.tilePxWidth + this.tilePxPadding) * sim.board.width;
+		this.canvas.height = (this.tilePxHeight + this.tilePxPadding) * sim.board.height;
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		// Row loop
-		for(_i = 0; _i < sim.size.height; _i++) {
+		for(_i = 0; _i < sim.board.height; _i++) {
 			// Tile loop
-			for(_j = 0; _j < sim.size.width; _j++) {
+			for(_j = 0; _j < sim.board.width; _j++) {
 				// Draw tile
 				this.ctx.fillStyle = defaultColor;
-				if (_i === recentPath.position.y && _j === recentPath.position.x) {
+				if (_i === recentPathPos.y && _j === recentPathPos.x) {
 					this.ctx.fillStyle = occupiedColor;
 				} else if (sim.board.wasTileVisited({x: _j, y: _i})) {
 					this.ctx.fillStyle = visitedColor;
