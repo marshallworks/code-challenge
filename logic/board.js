@@ -27,7 +27,7 @@
 		return this.grid[pos.y][pos.x].getDirection();
 	};
 
-	Board.prototype.visitTile = function (path) {
+	Board.prototype.visitTileWithPath = function (path) {
 		var pos = path.getPosition();
 		this.grid[pos.y][pos.x].visit(path.id);
 		return this;

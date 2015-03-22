@@ -40,6 +40,10 @@
 		return this.moves[this.moves.length - 1];
 	};
 
+	Path.prototype.getStartPosition = function () {
+		return this.moves[0];
+	};
+
 	Path.prototype.move = function (direction) {
 		var pos = this.getPosition();
 		var newX = pos.x;
