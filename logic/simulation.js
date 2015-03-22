@@ -10,7 +10,13 @@
 	var Renderer = window.Renderer || {};
 	var Sound = window.Sound || {};
 
-	function Simulation (boardWidth, boardHeight) {
+	function Simulation (boardWidth, boardHeight, fillScreen) {
+		var temp;
+		if (fillScreen) {
+			temp = new Renderer({canvas: UT.qs('#board')}).fillScreenSize();
+			boardWidth = temp.width;
+			boardHeight = temp.height;
+		}
 		this.board = new Board(boardWidth, boardHeight);
 		this.paths = [];
 		this.status = 'OK';
@@ -121,6 +127,8 @@
 				fellCount++;
 			}
 		}
+		UT.qs('#board-width').value = this.board.width;
+		UT.qs('#board-height').value = this.board.height;
 		UT.qs('.path-next').disabled = true;
 		UT.qs('.path-complete').disabled = true;
 		UT.qs('.path-play').disabled = true;

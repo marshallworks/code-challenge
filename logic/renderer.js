@@ -37,6 +37,13 @@
 		return this;
 	}
 
+	Renderer.prototype.fillScreenSize = function () {
+		return {
+			width: Math.floor(window.innerWidth / (this.tilePxWidth + this.tilePxPadding)),
+			height: Math.floor(window.innerHeight / (this.tilePxHeight + this.tilePxPadding))
+		};
+	};
+
 	Renderer.prototype.drawBoard = function (sim) {
 		var _i, _j;
 		var recentPathPos = sim.paths[sim.paths.length - 1].getPosition();

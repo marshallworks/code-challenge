@@ -7,7 +7,9 @@
 	var Simulation = window.Simulation || {};
 
 	// SCOPE:
-	var reset,
+	var newSim,
+		reset,
+		fillReset,
 		getValues,
 		pathNext,
 		pathComplete,
@@ -29,12 +31,20 @@
 	var setStartY = null;
 
 	// Event Functions
-	reset = function () {
+	newSim = function (fillScreen) {
 		getValues();
-		currentState = new Simulation(setWidth, setHeight)
+		currentState = new Simulation(setWidth, setHeight, fillScreen)
 			.start(setStartX, setStartY)
 			.signal()
 			.render();
+	};
+
+	reset = function () {
+		newSim(false);
+	};
+
+	fillReset = function () {
+		newSim(true);
 	};
 
 	getValues = function () {
@@ -102,6 +112,7 @@
 		console.log('Page Load Complete');
 		UT.on(UT.qs('.set'), 'click', reset);
 		UT.on(UT.qs('.reset'), 'click', reset);
+		UT.on(UT.qs('.fill-screen'), 'click', fillReset);
 		UT.on(UT.qs('.path-next'), 'click', pathNext);
 		UT.on(UT.qs('.path-play'), 'click', pathPlay);
 		UT.on(UT.qs('.path-stop'), 'click', stopPlay);
