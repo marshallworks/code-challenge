@@ -45,7 +45,7 @@
 		}
 		var startPath = new Path(startPos);
 		this.paths.push(startPath);
-		this.board.visitTileWithPath(startPath);
+		this.board.visitTileWithPath(startPos, startPath);
 		return this;
 	};
 
@@ -56,13 +56,15 @@
 		if (!this.board.isPositionInBounds(newPos)) {
 			this.status = 'FELL';
 			path.setResult('FELL');
-		} else if (this.board.wasTileVisitedByPath(path)) {
-			this.status = 'LOOP';
-			path.setResult('LOOP');
 		} else {
-			// Simultion can continue
-			this.status = 'OK';
-			this.board.visitTileWithPath(path);
+			if (this.board.wasTileVisitedByPath(newPos, path)) {
+				this.status = 'LOOP';
+				path.setResult('LOOP');
+			} else {
+				// Simultion can continue
+				this.status = 'OK';
+				this.board.visitTileWithPath(newPos, path);
+			}
 		}
 		return this;
 	};
@@ -118,8 +120,11 @@
 		var messageDisplay = UT.qs('.message');
 		var loopCount = 0;
 		var fellCount = 0;
+		var pathLengths = 0;
+		var averagePathLength = 0;
 		for (_i = 0; _i < totalPaths; _i++) {
 			loopPath = this.paths[_i];
+			pathLengths += loopPath.moves.length - 1;
 			if (loopPath.result === 'LOOP') {
 				loopCount++;
 			}
@@ -127,6 +132,7 @@
 				fellCount++;
 			}
 		}
+		averagePathLength = pathLengths / totalPaths;
 		UT.qs('#board-width').value = this.board.width;
 		UT.qs('#board-height').value = this.board.height;
 		UT.qs('.path-next').disabled = true;
@@ -139,6 +145,7 @@
 		UT.qs('.path-number').innerHTML = totalPaths;
 		UT.qs('.loop-number').innerHTML = loopCount;
 		UT.qs('.fell-number').innerHTML = fellCount;
+		UT.qs('.average-path-length-number').innerHTML = averagePathLength;
 		switch (this.status) {
 			case 'OK':
 				UT.qs('.path-next').disabled = false;

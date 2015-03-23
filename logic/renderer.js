@@ -6,7 +6,7 @@
 	var defaultColor = 'rgb(66, 77, 88)';
 	var occupiedColor = 'rgb(158, 11, 15)';
 	var visitedColor = 'rgb(60, 184, 120)';
-	var pathColor = 'rgba(20, 220, 250, 0.3)';
+	var pathColor = 'rgba(20, 220, 250, 0.1)';
 	var pathWidth = '2';
 	var pathTemplate = '<path d="{{points}}" fill="none" stroke="{{color}}" stroke-width="{{width}}"></path>';
 

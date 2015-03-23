@@ -5,7 +5,7 @@
 	// Constants
 	var defaultBoardWidth = 28;
 	var defaultBoardHeight = 28;
-	var tileDirections = ['up', 'right', 'down', 'left'];
+	var tileDirections = ['up', 'up-right', 'right', 'right-down', 'down', 'down-left', 'left', 'left-up'];
 
 	// Private Methods
 	var generate, randomTileDirection;
@@ -27,8 +27,7 @@
 		return this.grid[pos.y][pos.x].getDirection();
 	};
 
-	Board.prototype.visitTileWithPath = function (path) {
-		var pos = path.getPosition();
+	Board.prototype.visitTileWithPath = function (pos, path) {
 		this.grid[pos.y][pos.x].visit(path.id);
 		return this;
 	};
@@ -37,8 +36,7 @@
 		return this.grid[pos.y][pos.x].wasVisited();
 	};
 
-	Board.prototype.wasTileVisitedByPath = function (path) {
-		var pos = path.getPosition();
+	Board.prototype.wasTileVisitedByPath = function (pos, path) {
 		return this.grid[pos.y][pos.x].wasVisitedByPath(path.id);
 	};
 
@@ -67,8 +65,8 @@
 		return this.direction;
 	};
 
-	Tile.prototype.visit = function (path) {
-		this.visitedBy.push(path.id);
+	Tile.prototype.visit = function (pathID) {
+		this.visitedBy.push(pathID);
 		return this;
 	};
 
@@ -76,8 +74,8 @@
 		return this.visitedBy.length > 0 ? true : false;
 	};
 
-	Tile.prototype.wasVisitedByPath = function (path) {
-		return this.visitedBy.indexOf(path.id) !== -1 ? true : false;
+	Tile.prototype.wasVisitedByPath = function (pathID) {
+		return this.visitedBy.indexOf(pathID) !== -1 ? true : false;
 	};
 
 	// Private Methods

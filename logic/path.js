@@ -52,14 +52,30 @@
 			case 'up':
 				newY--;
 				break;
+			case 'up-right':
+				newY--;
+				newX++;
+				break;
 			case 'right':
 				newX++;
+				break;
+			case 'right-down':
+				newX++;
+				newY++;
 				break;
 			case 'down':
 				newY++;
 				break;
+			case 'down-left':
+				newY++;
+				newX--;
+				break;
 			case 'left':
 				newX--;
+				break;
+			case 'left-up':
+				newX--;
+				newY--;
 				break;
 			default:
 				console.log('Invalid Direction.');
